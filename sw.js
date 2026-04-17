@@ -1,6 +1,7 @@
-const CACHE = 'denken2-v1';
+const CACHE = 'denken2-v2';
 const PRECACHE = [
   './index.html',
+  './questions.js',
   './manifest.json',
   './icon.svg',
   'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css',
