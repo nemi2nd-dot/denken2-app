@@ -1,0 +1,19 @@
+{
+  "name": "電験2種 学習アプリ",
+  "short_name": "電験2種",
+  "description": "電験第二種試験対策 問題演習アプリ",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f0f4f8",
+  "theme_color": "#1a5276",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

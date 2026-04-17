@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>電験2種 学習アプリ</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a5276">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="電験2種">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <style>
+    :root {
+      --primary: #1a5276;
+      --accent: #2e86c1;
+      --success: #1e8449;
+      --danger: #c0392b;
+      --warn: #d68910;
+      --bg: #f0f4f8;
+      --card: #ffffff;
+      --text: #1a202c;
+      --muted: #718096;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', 'Hiragino Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    header { background: var(--primary); color: white; padding: 14px 20px; display: flex; align-items: center; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+    header h1 { font-size: 1.2rem; font-weight: 700; }
+    header span { font-size: 0.82rem; opacity: 0.8; margin-left: auto; }
+    .back-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; display: none; }
+    .back-btn:hover { background: rgba(255,255,255,0.35); }
+
+    .screen { display: none; padding: 20px; max-width: 820px; margin: 0 auto; }
+    .screen.active { display: block; }
+
+    .subtitle { text-align: center; color: var(--muted); margin-bottom: 24px; font-size: 0.9rem; margin-top: 12px; }
+
+    .stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 20px; }
+    .stat-box { background: var(--card); border-radius: 10px; padding: 14px; text-align: center; border: 1px solid var(--border); }
+    .stat-box .val { font-size: 1.7rem; font-weight: 800; color: var(--primary); }
+    .stat-box .lbl { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+    .subject-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 28px; }
+    .subject-card { background: var(--card); border-radius: 12px; padding: 20px 14px; text-align: center; cursor: pointer; border: 2px solid var(--border); transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .subject-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+    .subject-card .icon { font-size: 2.2rem; margin-bottom: 8px; }
+    .subject-card .name { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+    .subject-card .count { font-size: 0.76rem; color: var(--muted); }
+    .subject-card .pbar { margin-top: 8px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .subject-card .pfill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
+
+    .all-btn { display: block; width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-bottom: 10px; }
+    .all-btn:hover { background: var(--accent); }
+    .reset-btn { display: block; width: 100%; padding: 10px; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 10px; font-size: 0.82rem; cursor: pointer; }
+    .reset-btn:hover { color: var(--danger); border-color: var(--danger); }
+
+    .section-label { font-weight: 600; font-size: 0.88rem; margin-bottom: 8px; color: var(--text); }
+    .option-row { display: flex; gap: 8px; margin-bottom: 14px; }
+    .mode-btn { flex: 1; padding: 10px 6px; border-radius: 8px; border: 2px solid var(--border); background: var(--card); cursor: pointer; font-size: 0.85rem; transition: all 0.15s; }
+    .mode-btn.sel { border-color: var(--accent); background: #ebf5fb; color: var(--accent); font-weight: 700; }
+    .start-btn { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 6px; }
+    .start-btn:hover { background: var(--primary); }
+
+    .quiz-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .quiz-meta { font-size: 0.82rem; color: var(--muted); }
+    .subject-tag { font-size: 0.76rem; padding: 3px 10px; border-radius: 20px; background: var(--primary); color: white; }
+    .progress-track { height: 5px; background: var(--border); border-radius: 3px; margin-bottom: 18px; }
+    .progress-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.4s; }
+
+    .question-card { background: var(--card); border-radius: 14px; padding: 22px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); margin-bottom: 14px; }
+    .question-text { font-size: 1rem; line-height: 1.8; font-weight: 600; margin-bottom: 4px; }
+    /* KaTeX inline sizing */
+    .question-text .katex { font-size: 1em; }
+    .question-category { font-size: 0.75rem; color: var(--muted); margin-bottom: 16px; }
+
+    .choices { display: flex; flex-direction: column; gap: 9px; }
+    .choice-btn { padding: 12px 16px; border-radius: 9px; border: 2px solid var(--border); background: var(--card); text-align: left; font-size: 0.92rem; cursor: pointer; transition: all 0.15s; line-height: 1.6; }
+    .choice-btn .katex { font-size: 1em; }
+    .choice-btn:hover:not(:disabled) { border-color: var(--accent); background: #ebf5fb; }
+    .choice-btn.correct { border-color: var(--success); background: #eafaf1; color: var(--success); font-weight: 700; }
+    .choice-btn.wrong { border-color: var(--danger); background: #fdedec; color: var(--danger); }
+    .choice-btn.show-correct { border-color: var(--success); background: #eafaf1; }
+    .choice-btn:disabled { cursor: default; }
+
+    .explanation { margin-top: 14px; padding: 13px 16px; border-radius: 9px; background: #fef9e7; border-left: 4px solid var(--warn); font-size: 0.88rem; line-height: 1.9; display: none; }
+    .explanation .katex { font-size: 1em; }
+    .explanation.show { display: block; }
+
+    .next-btn { width: 100%; padding: 13px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; display: none; margin-top: 4px; }
+    .next-btn.show { display: block; }
+    .next-btn:hover { background: var(--accent); }
+
+    .result-card { background: var(--card); border-radius: 14px; padding: 28px 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.07); margin-bottom: 18px; }
+    .score-ring { width: 116px; height: 116px; border-radius: 50%; margin: 0 auto 18px; display: flex; align-items: center; justify-content: center; flex-direction: column; border: 6px solid; }
+    .score-ring.great { border-color: var(--success); color: var(--success); background: #eafaf1; }
+    .score-ring.good  { border-color: var(--accent);  color: var(--accent);  background: #ebf5fb; }
+    .score-ring.poor  { border-color: var(--danger);  color: var(--danger);  background: #fdedec; }
+    .score-pct { font-size: 1.9rem; font-weight: 900; line-height: 1.1; }
+    .score-label { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
+    .score-sub { color: var(--muted); font-size: 0.88rem; margin-bottom: 18px; }
+    .breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .bd-item { padding: 11px; border-radius: 8px; background: var(--bg); }
+    .bd-val { font-size: 1.35rem; font-weight: 800; }
+    .bd-lbl { font-size: 0.72rem; color: var(--muted); }
+
+    .action-btns { display: flex; flex-direction: column; gap: 9px; }
+    .action-btns button { padding: 13px; border-radius: 10px; font-size: 0.95rem; font-weight: 700; cursor: pointer; border: none; }
+    .btn-retry { background: var(--accent); color: white; }
+    .btn-retry:hover { background: var(--primary); }
+    .btn-home { background: var(--bg); color: var(--text); border: 1px solid var(--border) !important; }
+
+    /* install banner */
+    #installBanner { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--primary); color: white; padding: 14px 20px; display: flex; align-items: center; gap: 10px; z-index: 100; }
+    #installBanner button { padding: 8px 18px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; font-size: 0.9rem; }
+    #installBanner .ibtn-yes { background: #f4d03f; color: var(--primary); }
+    #installBanner .ibtn-no  { background: transparent; color: rgba(255,255,255,0.7); }
+    #installBanner p { flex: 1; font-size: 0.88rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <button class="back-btn" id="backBtn" onclick="goHome()">← 戻る</button>
+  <h1>⚡ 電験2種 学習アプリ</h1>
+  <span id="hdrDate"></span>
+</header>
+
+<!-- HOME -->
+<div class="screen active" id="homeScreen">
+  <p class="subtitle">科目を選んで問題を解こう</p>
+  <div class="stats-row">
+    <div class="stat-box"><div class="val" id="totAtt">0</div><div class="lbl">累計回答</div></div>
+    <div class="stat-box"><div class="val" id="totCor">0</div><div class="lbl">正解数</div></div>
+    <div class="stat-box"><div class="val" id="totRate">—</div><div class="lbl">正答率</div></div>
+  </div>
+  <div class="subject-grid" id="subjectGrid"></div>
+  <button class="all-btn" onclick="startAll()">全科目ランダム出題（20問）</button>
+  <button class="reset-btn" onclick="resetProg()">進捗をリセット</button>
+</div>
+
+<!-- SUBJECT SELECT -->
+<div class="screen" id="subjectScreen">
+  <h2 id="subTitle" style="margin-bottom:6px;font-size:1.05rem"></h2>
+  <p id="subDesc" style="color:var(--muted);font-size:0.82rem;margin-bottom:18px"></p>
+  <div class="section-label">出題モード</div>
+  <div class="option-row">
+    <button class="mode-btn sel" id="mAll"    onclick="selMode('all')">全問題</button>
+    <button class="mode-btn"     id="mWrong"  onclick="selMode('wrong')">苦手問題</button>
+    <button class="mode-btn"     id="mRandom" onclick="selMode('random')">ランダム</button>
+  </div>
+  <div class="section-label">出題数</div>
+  <div class="option-row">
+    <button class="mode-btn sel" id="c10"  onclick="selCnt(10)">10問</button>
+    <button class="mode-btn"     id="c20"  onclick="selCnt(20)">20問</button>
+    <button class="mode-btn"     id="cAll" onclick="selCnt(0)">全問</button>
+  </div>
+  <button class="start-btn" onclick="startFromSubject()">開始する</button>
+</div>
+
+<!-- QUIZ -->
+<div class="screen" id="quizScreen">
+  <div class="quiz-header">
+    <span class="quiz-meta" id="qMeta"></span>
+    <span class="subject-tag" id="qTag"></span>
+  </div>
+  <div class="progress-track"><div class="progress-fill" id="qProg"></div></div>
+  <div class="question-card" id="qCard">
+    <div class="question-text" id="qText"></div>
+    <div class="question-category" id="qCat"></div>
+    <div class="choices" id="qChoices"></div>
+    <div class="explanation" id="qExp"></div>
+  </div>
+  <button class="next-btn" id="nextBtn" onclick="nextQ()">次の問題 →</button>
+</div>
+
+<!-- RESULT -->
+<div class="screen" id="resultScreen">
+  <div class="result-card">
+    <div class="score-ring" id="scoreRing"><div class="score-pct" id="scorePct"></div></div>
+    <div class="score-label" id="scoreLbl"></div>
+    <div class="score-sub" id="scoreSub"></div>
+    <div class="breakdown">
+      <div class="bd-item"><div class="bd-val" id="rCor" style="color:var(--success)"></div><div class="bd-lbl">正解</div></div>
+      <div class="bd-item"><div class="bd-val" id="rWrong" style="color:var(--danger)"></div><div class="bd-lbl">不正解</div></div>
+      <div class="bd-item"><div class="bd-val" id="rTotal"></div><div class="bd-lbl">出題数</div></div>
+      <div class="bd-item"><div class="bd-val" id="rTime"></div><div class="bd-lbl">所要時間</div></div>
+    </div>
+  </div>
+  <div class="action-btns">
+    <button class="btn-retry" onclick="retryQuiz()">もう一度</button>
+    <button class="btn-home"  onclick="goHome()">ホームへ戻る</button>
+  </div>
+</div>
+
+<!-- PWA install banner -->
+<div id="installBanner" style="display:none">
+  <p>📱 ホーム画面に追加してアプリとして使えます</p>
+  <button class="ibtn-yes" id="installYes">追加</button>
+  <button class="ibtn-no"  id="installNo">後で</button>
+</div>
+
+<!-- KaTeX -->
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script>
+// ===== DATA =====
+const SUBJECTS = [
+  { id:'theory',  name:'理論', icon:'⚡', desc:'電気回路・電磁気・電子回路' },
+  { id:'power',   name:'電力', icon:'🔌', desc:'発電・送電・変電・配電' },
+  { id:'machine', name:'機械', icon:'⚙️', desc:'電気機器・パワエレ・自動制御' },
+  { id:'law',     name:'法規', icon:'📋', desc:'電気事業法・電気設備技術基準' },
+];
+
+const Q = [
+  // ===== 理論 =====
+  { id:'t01', s:'theory', cat:'電気回路', dif:2,
+    q:'RL直列回路において、抵抗 $R=3\\,\\Omega$、誘導性リアクタンス $X_L=4\\,\\Omega$ のとき、インピーダンス $Z$ は何Ωか。',
+    c:['$Z=1\\,\\Omega$','$Z=5\\,\\Omega$','$Z=7\\,\\Omega$','$Z=12\\,\\Omega$'], a:1,
+    exp:'$Z = \\sqrt{R^2 + X_L^2} = \\sqrt{3^2+4^2} = \\sqrt{25} = 5\\,\\Omega$。インピーダンスは抵抗とリアクタンスのベクトル和。' },
+
+  { id:'t02', s:'theory', cat:'電磁気', dif:2,
+    q:'空気中の2点電荷 $Q_1=2\\times10^{-6}\\,\\text{C}$、$Q_2=3\\times10^{-6}\\,\\text{C}$ が $r=1\\,\\text{m}$ 離れているとき、クーロン力 $F$ は何Nか。$(k=9\\times10^9\\,\\text{N}\\cdot\\text{m}^2/\\text{C}^2)$',
+    c:['$0.027\\,\\text{N}$','$0.054\\,\\text{N}$','$0.54\\,\\text{N}$','$5.4\\,\\text{N}$'], a:1,
+    exp:'$F = k\\dfrac{Q_1 Q_2}{r^2} = 9\\times10^9 \\times \\dfrac{2\\times10^{-6} \\times 3\\times10^{-6}}{1^2} = 0.054\\,\\text{N}$' },
+
+  { id:'t03', s:'theory', cat:'電気回路', dif:2,
+    q:'RLC直列共振回路において共振条件として正しいのはどれか。',
+    c:['$R = X_L$','$X_L = X_C$','$R = X_C$','$X_L \\cdot X_C = R^2$'], a:1,
+    exp:'共振条件は $X_L = X_C$、すなわち $\\omega L = \\dfrac{1}{\\omega C}$。このとき $Z=R$（最小値）となり電流が最大となる。' },
+
+  { id:'t04', s:'theory', cat:'電気回路', dif:2,
+    q:'三相平衡Y結線回路において線間電圧が $200\\,\\text{V}$ のとき、相電圧は何Vか。$(\\sqrt{3}\\approx 1.732)$',
+    c:['$100\\,\\text{V}$','$115.5\\,\\text{V}$','$200\\,\\text{V}$','$346.4\\,\\text{V}$'], a:1,
+    exp:'Y結線：相電圧 $= \\dfrac{\\text{線間電圧}}{\\sqrt{3}} = \\dfrac{200}{1.732} \\approx 115.5\\,\\text{V}$。Δ結線では相電圧＝線間電圧。' },
+
+  { id:'t05', s:'theory', cat:'電子回路', dif:2,
+    q:'トランジスタの電流増幅率 $h_{FE}=100$ のとき、ベース電流 $I_B=0.05\\,\\text{mA}$ のときコレクタ電流 $I_C$ は何mAか。',
+    c:['$0.5\\,\\text{mA}$','$2\\,\\text{mA}$','$5\\,\\text{mA}$','$50\\,\\text{mA}$'], a:2,
+    exp:'$I_C = h_{FE} \\times I_B = 100 \\times 0.05 = 5\\,\\text{mA}$。$h_{FE}$ はDC電流増幅率。' },
+
+  { id:'t06', s:'theory', cat:'電磁気', dif:3,
+    q:'磁束密度 $B=0.5\\,\\text{T}$ の磁界中に長さ $\\ell=0.4\\,\\text{m}$ の導体を磁界に直交させ、速度 $v=10\\,\\text{m/s}$ で移動させたときの誘起起電力 $e$ は何Vか。',
+    c:['$0.2\\,\\text{V}$','$0.5\\,\\text{V}$','$2\\,\\text{V}$','$5\\,\\text{V}$'], a:2,
+    exp:'$e = B\\ell v = 0.5 \\times 0.4 \\times 10 = 2\\,\\text{V}$。フレミングの右手の法則による誘起起電力。' },
+
+  { id:'t07', s:'theory', cat:'電気回路', dif:3,
+    q:'有効電力 $P=1\\,\\text{kW}$、力率 $\\cos\\varphi=0.8$ のとき、皮相電力 $S$ は何kVAか。',
+    c:['$0.8\\,\\text{kVA}$','$1\\,\\text{kVA}$','$1.25\\,\\text{kVA}$','$1.6\\,\\text{kVA}$'], a:2,
+    exp:'$S = \\dfrac{P}{\\cos\\varphi} = \\dfrac{1000}{0.8} = 1250\\,\\text{VA} = 1.25\\,\\text{kVA}$' },
+
+  { id:'t08', s:'theory', cat:'電磁気', dif:2,
+    q:'比透磁率 $\\mu_r=1000$ の鉄心の透磁率 $\\mu$ は何H/mか。$(\\mu_0 = 4\\pi\\times10^{-7}\\,\\text{H/m})$',
+    c:['$4\\pi\\times10^{-4}\\,\\text{H/m}$','$4\\pi\\times10^{-7}\\,\\text{H/m}$','$4\\pi\\times10^{-10}\\,\\text{H/m}$','$1000\\,\\text{H/m}$'], a:0,
+    exp:'$\\mu = \\mu_0 \\mu_r = 4\\pi\\times10^{-7} \\times 1000 = 4\\pi\\times10^{-4}\\,\\text{H/m}$' },
+
+  { id:'t09', s:'theory', cat:'電子回路', dif:3,
+    q:'演算増幅器の反転増幅回路において、$R_1=10\\,\\text{k}\\Omega$、$R_f=100\\,\\text{k}\\Omega$ のとき電圧利得（絶対値）はいくらか。',
+    c:['$0.1$','$1$','$10$','$100$'], a:2,
+    exp:'反転増幅の電圧利得 $|A_v| = \\dfrac{R_f}{R_1} = \\dfrac{100\\,\\text{k}}{10\\,\\text{k}} = 10$' },
+
+  { id:'t10', s:'theory', cat:'電気回路', dif:2,
+    q:'キルヒホッフの電流則（KCL）の説明として正しいのはどれか。',
+    c:['回路の閉ループ内の起電力の和は電圧降下の和に等しい','任意の節点に流れ込む電流の代数和はゼロ','電力の総和は常にゼロ','抵抗に流れる電流は電圧に反比例する'], a:1,
+    exp:'KCL：任意の節点において、流れ込む電流の和＝流れ出す電流の和（電荷保存則）。KVLは閉ループの電圧に関する法則。' },
+
+  { id:'t11', s:'theory', cat:'電気回路', dif:3,
+    q:'重ね合わせの定理が適用できる回路の条件はどれか。',
+    c:['線形回路','非線形回路のみ','電源が一つだけの回路','直流回路のみ'], a:0,
+    exp:'重ね合わせの定理は線形回路（R・L・C で構成）に適用できる。各電源を単独に作用させた結果を重ね合わせる。' },
+
+  { id:'t12', s:'theory', cat:'電磁気', dif:3,
+    q:'ソレノイドコイルのインダクタンス $L$ を2倍にするには、巻数 $N$ をどうすればよいか。',
+    c:['$\\sqrt{2}$ 倍にする','$2$ 倍にする','$4$ 倍にする','$N$ を変えず断面積を変える'], a:0,
+    exp:'$L \\propto N^2$ なので、$L$ を2倍にするには $N$ を $\\sqrt{2}$ 倍にする必要がある。' },
+
+  // ===== 電力 =====
+  { id:'p01', s:'power', cat:'発電', dif:2,
+    q:'汽力発電所のランキンサイクルの構成要素として正しい組み合わせはどれか。',
+    c:['ボイラ・タービン・復水器・給水ポンプ','ボイラ・タービン・変圧器・給水ポンプ','原子炉・タービン・復水器・変圧器','コンプレッサ・燃焼器・タービン・給水ポンプ'], a:0,
+    exp:'ランキンサイクル：①給水ポンプで加圧 → ②ボイラで加熱・蒸発 → ③タービンで膨張・仕事 → ④復水器で凝縮。' },
+
+  { id:'p02', s:'power', cat:'送電', dif:2,
+    q:'架空送電線のたるみ（弛度）$D$ の式として正しいのはどれか。（$W$：電線単位重量 [N/m]、$S$：径間 [m]、$T$：水平張力 [N]）',
+    c:['$D = \\dfrac{WS^2}{8T}$','$D = \\dfrac{WS}{8T}$','$D = \\dfrac{W^2S}{8T}$','$D = \\dfrac{8T}{WS^2}$'], a:0,
+    exp:'弛度 $D = \\dfrac{WS^2}{8T}$。径間の2乗に比例し、張力に反比例する。カテナリー近似式。' },
+
+  { id:'p03', s:'power', cat:'変電', dif:2,
+    q:'変圧器の効率が最大となる条件はどれか。',
+    c:['鉄損 $>$ 銅損','鉄損 $=$ 銅損','鉄損 $<$ 銅損','無負荷損 $=0$'], a:1,
+    exp:'効率 $\\eta = \\dfrac{\\text{出力}}{\\text{出力}+\\text{鉄損}+\\text{銅損}}$ が最大になるのは鉄損（固定損）＝銅損（負荷損）のとき。' },
+
+  { id:'p04', s:'power', cat:'配電', dif:2,
+    q:'我が国の低圧配電の標準電圧として正しいのはどれか。',
+    c:['単相100V・200V（三相200V）','110V・220V','6600V・3300V','22000V・6600V'], a:0,
+    exp:'低圧配電の標準電圧は単相100V・200V、三相200V。高圧配電線は6600V。' },
+
+  { id:'p05', s:'power', cat:'発電', dif:3,
+    q:'水力発電所の理論水力 $P_{th}$ の計算式として正しいのはどれか。（$\\rho$：水の密度、$g$：重力加速度、$Q$：流量 [m³/s]、$H$：有効落差 [m]）',
+    c:['$P_{th} = \\rho g Q H$','$P_{th} = \\dfrac{\\rho g Q}{H}$','$P_{th} = \\dfrac{\\rho Q}{gH}$','$P_{th} = \\dfrac{gQH}{\\rho}$'], a:0,
+    exp:'理論水力 $P_{th} = \\rho g Q H\\,\\text{[W]}$。$\\rho = 1000\\,\\text{kg/m}^3$、$g = 9.8\\,\\text{m/s}^2$。実出力はタービン・発電機効率を乗じる。' },
+
+  { id:'p06', s:'power', cat:'送電', dif:3,
+    q:'電力系統の安定度向上対策として誤っているのはどれか。',
+    c:['直列コンデンサの設置','送電線のインダクタンスを増加させる','高速度遮断器の採用','自動再閉路方式の採用'], a:1,
+    exp:'安定度向上にはリアクタンスの低減が有効。直列コンデンサはリアクタンスを補償する。インダクタンス増加は安定度を悪化させる。' },
+
+  { id:'p07', s:'power', cat:'変電', dif:2,
+    q:'$\\text{SF}_6$（六フッ化硫黄）ガスを使用した変電機器の特徴として誤っているのはどれか。',
+    c:['絶縁性能が高い','消弧性能が優れている','地球温暖化係数（GWP）が非常に低い','気中絶縁より小形化できる'], a:2,
+    exp:'$\\text{SF}_6$ ガスのGWPは約23500と非常に高く温暖化への影響が大きい。使用量削減・回収再利用が求められている。' },
+
+  { id:'p08', s:'power', cat:'配電', dif:3,
+    q:'低圧配電線に使用されるバランサの目的はどれか。',
+    c:['力率の改善','単相3線式配電線の両側電圧アンバランスの解消','高調波の抑制','系統の安定化'], a:1,
+    exp:'バランサは単相3線式において、両外線間の負荷不平衡による電圧アンバランスを解消する変圧器。' },
+
+  { id:'p09', s:'power', cat:'発電', dif:3,
+    q:'LNG火力のコンバインドサイクル発電の熱効率が高い理由として最も適切なのはどれか。',
+    c:['LNGの発熱量が高いから','ガスタービンと蒸気タービンの両方を用い排熱を回収するから','タービン効率が100%に近いから','燃料消費量がゼロだから'], a:1,
+    exp:'コンバインドサイクル：ガスタービン排熱で蒸気を発生させ蒸気タービンを駆動。総合熱効率60%超が可能で単純サイクルより高効率。' },
+
+  { id:'p10', s:'power', cat:'送電', dif:2,
+    q:'送電線の表皮効果（skin effect）について正しい説明はどれか。',
+    c:['周波数が高いほど導体中心部に電流が集中する','周波数が高いほど導体表面部に電流が集中する','直流でも発生する','送電損失を減少させる'], a:1,
+    exp:'表皮効果：交流電流は周波数が高いほど導体表面に集中する現象。実効抵抗が増加し、大電力送電では多導体が有利。' },
+
+  { id:'p11', s:'power', cat:'変電', dif:3,
+    q:'絶縁協調の目的として最も適切なのはどれか。',
+    c:['機器の絶縁を過大設計して確実に保護する','系統内各機器の絶縁強度を異常電圧に対して合理的に決定する','すべての機器に同じ絶縁レベルを適用する','避雷器を撤去してシンプルにする'], a:1,
+    exp:'絶縁協調：雷・開閉サージ等の異常電圧の大きさと保護特性を考慮し、各機器の絶縁強度を合理的に決定すること。' },
+
+  { id:'p12', s:'power', cat:'配電', dif:2,
+    q:'高圧受電設備における地絡継電器（GR）の動作量として正しいのはどれか。',
+    c:['過電流','地絡電流（零相電流）','電圧低下','周波数変動'], a:1,
+    exp:'GR（地絡継電器）は零相変流器（ZCT）で検出した零相電流（地絡電流）が整定値を超えると動作する。' },
+
+  // ===== 機械 =====
+  { id:'m01', s:'machine', cat:'変圧器', dif:2,
+    q:'変圧器において一次電圧 $V_1=6600\\,\\text{V}$、二次電圧 $V_2=210\\,\\text{V}$ のとき、巻数比 $a$ はいくらか。',
+    c:['約21.4','約31.4','約210','約314'], a:1,
+    exp:'$a = \\dfrac{V_1}{V_2} = \\dfrac{6600}{210} \\approx 31.4$。理想変圧器では電圧比＝巻数比、電流比＝巻数比の逆数。' },
+
+  { id:'m02', s:'machine', cat:'誘導電動機', dif:2,
+    q:'三相誘導電動機において、同期速度 $N_s=1500\\,\\text{rpm}$、回転速度 $N=1440\\,\\text{rpm}$ のとき、すべり $s$ はいくらか。',
+    c:['$s = 0.02$','$s = 0.04$','$s = 0.06$','$s = 0.96$'], a:1,
+    exp:'$s = \\dfrac{N_s - N}{N_s} = \\dfrac{1500-1440}{1500} = \\dfrac{60}{1500} = 0.04$' },
+
+  { id:'m03', s:'machine', cat:'直流電動機', dif:2,
+    q:'直流分巻電動機において速度制御の方法として誤っているのはどれか。',
+    c:['電機子電圧制御','界磁制御','電機子抵抗制御','周波数制御'], a:3,
+    exp:'直流電動機の速度制御：①電機子電圧制御 ②界磁制御 ③電機子抵抗制御。周波数制御は交流誘導電動機（インバータ）の方法。' },
+
+  { id:'m04', s:'machine', cat:'パワーエレクトロニクス', dif:3,
+    q:'PWM（パルス幅変調）インバータの特徴として正しいのはどれか。',
+    c:['直流を任意の周波数・電圧の交流に変換できる','交流を直流に変換する','直流の電圧だけを変換する','力率が低い'], a:0,
+    exp:'インバータは直流 → 交流の変換装置。PWM制御により出力電圧・周波数を可変でき、誘導電動機のVVVF駆動に使用される。' },
+
+  { id:'m05', s:'machine', cat:'同期発電機', dif:3,
+    q:'三相同期発電機において、界磁電流を増加させると何が起こるか。',
+    c:['出力周波数が増加する','端子電圧が増加する','回転速度が増加する','出力電流が減少する'], a:1,
+    exp:'端子電圧は励磁（界磁電流）によって決まる。界磁電流増加 → 磁束増加 → 誘起起電力増加 → 端子電圧上昇。周波数は回転速度のみで決定。' },
+
+  { id:'m06', s:'machine', cat:'自動制御', dif:2,
+    q:'PID制御において積分（I）動作の主な効果として正しいのはどれか。',
+    c:['応答を速くする','定常偏差をなくす','オーバーシュートを抑制する','外乱に対して即座に応答する'], a:1,
+    exp:'I動作：偏差の時間積分に比例した制御量を加える。定常偏差（オフセット）の除去に効果的。過度な積分は不安定化の原因となる。' },
+
+  { id:'m07', s:'machine', cat:'誘導電動機', dif:3,
+    q:'三相誘導電動機の最大トルク発生すべり $s_m$ の近似式として正しいのはどれか。（$R_2$：二次抵抗、$X_2$：二次リアクタンス）',
+    c:['$s_m = R_2 / X_2$','$s_m = X_2 / R_2$','$s_m = R_2^2 / X_2$','$s_m = R_2 / X_2^2$'], a:0,
+    exp:'最大トルク発生すべり $s_m \\approx \\dfrac{R_2}{X_2}$（近似）。二次抵抗を増やすと最大トルク発生点が高すべり側にシフト。' },
+
+  { id:'m08', s:'machine', cat:'変圧器', dif:3,
+    q:'変圧器の百分率インピーダンス（$\\%Z$）が小さいほど、どのような特性になるか。',
+    c:['短絡電流が小さくなる','短絡電流が大きくなる','効率が低下する','鉄損が増加する'], a:1,
+    exp:'短絡電流 $I_{sc} = \\dfrac{I_n}{\\%Z/100}$ なので $\\%Z$ が小さいほど $I_{sc}$ が大きくなる。保護設備の容量選定に影響する。' },
+
+  { id:'m09', s:'machine', cat:'パワーエレクトロニクス', dif:2,
+    q:'サイリスタ（SCR）の特徴として正しいのはどれか。',
+    c:['ゲート信号でターンオン・ターンオフ両方を制御できる','ゲートでターンオンできるが、ターンオフは電流をゼロにする必要がある','逆方向にも大電流を通せる','光信号では制御できない'], a:1,
+    exp:'サイリスタはゲートパルスでターンオン可能だが、ターンオフはアノード電流をゼロ（転流）にする必要がある。自己消弧能力はない（GTOは自己消弧可能）。' },
+
+  { id:'m10', s:'machine', cat:'自動制御', dif:3,
+    q:'ボード線図において、一次遅れ要素 $G(j\\omega) = \\dfrac{1}{1+j\\omega T}$ の折れ点周波数 $\\omega_c$ はどれか。',
+    c:['$\\omega_c = T$','$\\omega_c = 1/T$','$\\omega_c = T^2$','$\\omega_c = 1/T^2$'], a:1,
+    exp:'一次遅れ要素の折れ点周波数 $\\omega_c = \\dfrac{1}{T}$。この周波数でゲインが $-3\\,\\text{dB}$（約0.707倍）、位相遅れが $-45°$。' },
+
+  { id:'m11', s:'machine', cat:'直流電動機', dif:2,
+    q:'直流電動機の逆起電力 $E$ の式として正しいのはどれか。（$V$：端子電圧、$I_a$：電機子電流、$R_a$：電機子抵抗）',
+    c:['$E = V + I_a R_a$','$E = V - I_a R_a$','$E = V \\times I_a R_a$','$E = V/(I_a R_a)$'], a:1,
+    exp:'直流電動機：$V = E + I_a R_a$ より $E = V - I_a R_a$。逆起電力は回転速度に比例。起動時 $E=0$ なので大電流が流れる。' },
+
+  { id:'m12', s:'machine', cat:'同期電動機', dif:3,
+    q:'同期電動機を過励磁で運転したときの特性として正しいのはどれか。',
+    c:['遅れ力率で運転される','電力系統に対して進み力率（コンデンサと同じ働き）となる','回転速度が増加する','効率が低下する'], a:1,
+    exp:'同期電動機の過励磁運転：系統から見て進み電流（容量性）を取り込む。力率改善・調相機（同期コンデンサ）として機能する。' },
+
+  // ===== 法規 =====
+  { id:'l01', s:'law', cat:'電気事業法', dif:2,
+    q:'電気事業法において、電気主任技術者の保安監督の範囲として正しいのはどれか。',
+    c:['工事のみ','維持のみ','工事・維持・運用','工事・維持のみ'], a:2,
+    exp:'電気事業法第43条：自家用電気工作物の工事・維持・運用に関する保安の監督を行わせるために電気主任技術者を選任しなければならない。' },
+
+  { id:'l02', s:'law', cat:'電気設備技術基準', dif:2,
+    q:'電気設備技術基準における「高圧」の定義として正しいのはどれか。',
+    c:['直流750V超・交流600V超〜$7000\\,\\text{V}$以下','直流600V超・交流600V超〜$7000\\,\\text{V}$以下','$1000\\,\\text{V}$超〜$7000\\,\\text{V}$以下（直交流共通）','$600\\,\\text{V}$超〜$6600\\,\\text{V}$以下'], a:0,
+    exp:'電技第2条：低圧は直流750V以下・交流600V以下。高圧は直流750V超・交流600V超〜7000V以下。特別高圧は7000V超。' },
+
+  { id:'l03', s:'law', cat:'電気設備技術基準', dif:2,
+    q:'電技解釈における低圧幹線の電圧降下の許容値として正しいのはどれか。',
+    c:['供給電圧の2%以下','供給電圧の5%以下','供給電圧の10%以下','規定なし'], a:1,
+    exp:'電技解釈第148条：低圧幹線の電圧降下は最大供給電圧の5%（変圧器以外の場合は2%）以下。' },
+
+  { id:'l04', s:'law', cat:'電気事業法', dif:3,
+    q:'自家用電気工作物の定義として正しいのはどれか。',
+    c:['電気事業の用に供する電気工作物','電気事業の用に供する及び一般用電気工作物以外の電気工作物','一般の家庭で使用する電気工作物','$600\\,\\text{V}$以下の設備すべて'], a:1,
+    exp:'電気事業法第38条：自家用電気工作物は「電気事業の用に供する及び一般用電気工作物以外の電気工作物」。工場・ビル等の受変電設備が該当。' },
+
+  { id:'l05', s:'law', cat:'電気設備技術基準', dif:2,
+    q:'電技解釈における接地工事の種類と接地抵抗値の組み合わせで正しいのはどれか。',
+    c:['A種：$10\\,\\Omega$ 以下','A種：$100\\,\\Omega$ 以下','D種：$10\\,\\Omega$ 以下','C種：$100\\,\\Omega$ 以下'], a:0,
+    exp:'A種（高圧機器外箱等）：$10\\,\\Omega$ 以下。C種（300V超低圧機器）：$10\\,\\Omega$ 以下。D種（300V以下低圧機器）：$100\\,\\Omega$ 以下。' },
+
+  { id:'l06', s:'law', cat:'電気事業法', dif:3,
+    q:'電気工事士法において、第一種電気工事士でなければ従事できない工事はどれか。',
+    c:['一般用電気工作物の工事','自家用電気工作物（最大電力500kW未満の需要設備）の工事','低圧の電気工事のみ','照明器具の取付工事'], a:1,
+    exp:'第一種電気工事士：自家用電気工作物（最大500kW未満の需要設備）の工事。第二種は一般用のみ。500kW以上は電気主任技術者の監督のもとで工事。' },
+
+  { id:'l07', s:'law', cat:'電気設備技術基準', dif:2,
+    q:'架空電線路の支持物の昇塔防止装置は地上何m以上の位置に設けるか。',
+    c:['$2.0\\,\\text{m}$ 以上','$1.8\\,\\text{m}$ 以上','$1.5\\,\\text{m}$ 以上','規定なし'], a:1,
+    exp:'電技解釈：架空電線路の鉄塔等の昇塔防止装置は地上 $1.8\\,\\text{m}$ 以上の位置に設けること。' },
+
+  { id:'l08', s:'law', cat:'電気事業法', dif:3,
+    q:'電気主任技術者免状の種類と保安監督できる電圧の組み合わせで正しいのはどれか。',
+    c:['第一種：すべての電圧','第二種：$170\\,\\text{kV}$以上のみ','第三種：$50\\,\\text{kV}$以上','第一種：$7000\\,\\text{V}$以下のみ'], a:0,
+    exp:'第一種：すべての電圧。第二種：170kV未満。第三種：50kV未満（出力5000kW以上の発電所を除く）。' },
+
+  { id:'l09', s:'law', cat:'電気設備技術基準', dif:3,
+    q:'電技解釈における高圧受電設備において、構内で地絡が生じた場合の必要な措置として正しいのはどれか。',
+    c:['地絡電流を制限する','自動的に電路を遮断する','警報のみで遮断しない','常時監視のみ行う'], a:1,
+    exp:'電技解釈：高圧受電設備は地絡が生じた場合に自動的に電路を遮断する装置（地絡遮断器）を施設すること。GR+VCB または GCB が一般的。' },
+
+  { id:'l10', s:'law', cat:'電気事業法', dif:2,
+    q:'電気事業法における「保安規程」の届出先として正しいのはどれか。',
+    c:['警察署','消防署','経済産業大臣（または産業保安監督部長）','地方自治体の長'], a:2,
+    exp:'電気事業法第42条：自家用電気工作物を設置する者は保安規程を定め、経済産業大臣（産業保安監督部長等）に届け出なければならない。' },
+
+  { id:'l11', s:'law', cat:'電気設備技術基準', dif:2,
+    q:'特別高圧の電路に施設する避雷器（LA）に必要な接地工事はどれか。',
+    c:['A種接地工事（$10\\,\\Omega$ 以下）','B種接地工事','C種接地工事','D種接地工事'], a:0,
+    exp:'避雷器（LA）の接地工事はA種接地工事（$10\\,\\Omega$ 以下）。雷サージを大地に流すため低抵抗が必要。' },
+
+  { id:'l12', s:'law', cat:'電気事業法', dif:3,
+    q:'電気工事業法において、登録電気工事業者が備え付けなければならない器具として誤っているのはどれか。',
+    c:['絶縁抵抗計','接地抵抗計','電流計（単独）','検電器'], a:2,
+    exp:'電気工事業法：絶縁抵抗計・接地抵抗計・回路計（テスタ）・検電器を備えなければならない。電流計単独の規定はない。' },
+];
+
+// ===== MATH RENDER =====
+function renderMath(el) {
+  if (!el || !window.renderMathInElement) return;
+  renderMathInElement(el, {
+    delimiters: [
+      { left: '$$', right: '$$', display: true },
+      { left: '$',  right: '$',  display: false },
+    ],
+    throwOnError: false,
+  });
+}
+
+// ===== STATE =====
+const st = { qs:[], idx:0, cor:0, t0:null, label:'', subject:null };
+let _mode='all', _cnt=10;
+
+// ===== PROGRESS =====
+function loadP() { try { return JSON.parse(localStorage.getItem('d2p')||'{}'); } catch { return {}; } }
+function saveP(p) { localStorage.setItem('d2p', JSON.stringify(p)); }
+function resetProg() {
+  if (!confirm('進捗データをリセットしますか？')) return;
+  localStorage.removeItem('d2p');
+  renderHome();
+}
+
+// ===== HOME =====
+function renderHome() {
+  const p = loadP();
+  const ta = Object.values(p).reduce((s,v)=>s+(v.a||0),0);
+  const tc = Object.values(p).reduce((s,v)=>s+(v.c||0),0);
+  document.getElementById('totAtt').textContent  = ta;
+  document.getElementById('totCor').textContent  = tc;
+  document.getElementById('totRate').textContent = ta>0 ? Math.round(tc/ta*100)+'%' : '—';
+
+  const grid = document.getElementById('subjectGrid');
+  grid.innerHTML = '';
+  SUBJECTS.forEach(sub => {
+    const qs = Q.filter(q=>q.s===sub.id);
+    const done    = qs.filter(q=>p[q.id]?.a>0).length;
+    const totA    = qs.reduce((s,q)=>s+(p[q.id]?.a||0),0);
+    const totC    = qs.reduce((s,q)=>s+(p[q.id]?.c||0),0);
+    const pct     = qs.length>0 ? Math.round(done/qs.length*100) : 0;
+    const rate    = totA>0 ? Math.round(totC/totA*100) : null;
+    const card    = document.createElement('div');
+    card.className = 'subject-card';
+    card.innerHTML = `
+      <div class="icon">${sub.icon}</div>
+      <div class="name">${sub.name}</div>
+      <div class="count">${qs.length}問 ／ 正答率 ${rate!==null?rate+'%':'—'}</div>
+      <div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>
+    `;
+    card.onclick = () => openSub(sub.id);
+    grid.appendChild(card);
+  });
+  show('homeScreen', false);
+}
+
+// ===== SUBJECT =====
+function selMode(m) {
+  _mode = m;
+  ['mAll','mWrong','mRandom'].forEach(id=>document.getElementById(id).classList.remove('sel'));
+  document.getElementById({all:'mAll',wrong:'mWrong',random:'mRandom'}[m]).classList.add('sel');
+}
+function selCnt(c) {
+  _cnt = c;
+  ['c10','c20','cAll'].forEach(id=>document.getElementById(id).classList.remove('sel'));
+  document.getElementById({10:'c10',20:'c20',0:'cAll'}[String(c)]).classList.add('sel');
+}
+function openSub(id) {
+  st.subject = id;
+  const sub = SUBJECTS.find(s=>s.id===id);
+  document.getElementById('subTitle').textContent = sub.icon+' '+sub.name;
+  document.getElementById('subDesc').textContent  = sub.desc;
+  _mode='all'; _cnt=10;
+  selMode('all'); selCnt(10);
+  show('subjectScreen', true);
+}
+function startFromSubject() {
+  let qs = Q.filter(q=>q.s===st.subject);
+  const p = loadP();
+  if (_mode==='wrong') {
+    qs = qs.filter(q=>{ const v=p[q.id]; return !v||v.a===0||(v.c/v.a)<0.6; });
+    if (!qs.length) { alert('苦手問題がありません！よく頑張りました！'); return; }
+  }
+  shuffle(qs);
+  if (_cnt>0) qs = qs.slice(0,_cnt);
+  const sub = SUBJECTS.find(s=>s.id===st.subject);
+  startQuiz(qs, sub.name);
+}
+function startAll() {
+  startQuiz(shuffle([...Q]).slice(0,20), '全科目');
+}
+
+// ===== QUIZ =====
+function startQuiz(qs, label) {
+  Object.assign(st, { qs, idx:0, cor:0, t0:Date.now(), label });
+  document.getElementById('qTag').textContent = label;
+  show('quizScreen', true);
+  renderQ();
+}
+function renderQ() {
+  const q = st.qs[st.idx];
+  const tot = st.qs.length;
+  document.getElementById('qMeta').textContent = `${st.idx+1} / ${tot}問`;
+  document.getElementById('qProg').style.width = (st.idx/tot*100)+'%';
+
+  const sub = SUBJECTS.find(s=>s.id===q.s);
+  document.getElementById('qText').innerHTML = q.q;
+  document.getElementById('qCat').textContent = `【${sub.name}】${q.cat} ／ 難易度${'★'.repeat(q.dif)}`;
+
+  const choicesEl = document.getElementById('qChoices');
+  choicesEl.innerHTML = '';
+  q.c.forEach((txt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = `<span style="margin-right:6px;font-weight:700">${['①','②','③','④'][i]}</span>${txt}`;
+    btn.addEventListener('click', () => pick(i));
+    choicesEl.appendChild(btn);
+  });
+
+  document.getElementById('qExp').className = 'explanation';
+  document.getElementById('nextBtn').className = 'next-btn';
+
+  // Render math in entire card
+  renderMath(document.getElementById('qCard'));
+}
+function pick(chosen) {
+  const q = st.qs[st.idx];
+  const btns = document.querySelectorAll('.choice-btn');
+  btns.forEach(b => b.disabled = true);
+  const ok = chosen===q.a;
+  if (ok) { btns[chosen].classList.add('correct'); st.cor++; }
+  else    { btns[chosen].classList.add('wrong'); btns[q.a].classList.add('show-correct'); }
+
+  const p = loadP();
+  if (!p[q.id]) p[q.id]={a:0,c:0};
+  p[q.id].a++;
+  if (ok) p[q.id].c++;
+  saveP(p);
+
+  const expEl = document.getElementById('qExp');
+  expEl.innerHTML = (ok?'✅ 正解！ ':'❌ 不正解。') + q.exp;
+  expEl.className = 'explanation show';
+  renderMath(expEl);
+
+  const nb = document.getElementById('nextBtn');
+  nb.textContent = st.idx+1<st.qs.length ? '次の問題 →' : '結果を見る';
+  nb.className = 'next-btn show';
+}
+function nextQ() {
+  st.idx++;
+  if (st.idx>=st.qs.length) { showResult(); return; }
+  document.getElementById('qProg').style.width = (st.idx/st.qs.length*100)+'%';
+  renderQ();
+}
+
+// ===== RESULT =====
+function showResult() {
+  const tot = st.qs.length;
+  const pct = Math.round(st.cor/tot*100);
+  const sec = Math.round((Date.now()-st.t0)/1000);
+  const mm  = Math.floor(sec/60), ss = sec%60;
+
+  const ring = document.getElementById('scoreRing');
+  ring.className = 'score-ring '+(pct>=80?'great':pct>=60?'good':'poor');
+  document.getElementById('scorePct').textContent  = pct+'%';
+  document.getElementById('scoreLbl').textContent  = pct>=80?'優秀な成績！':pct>=60?'合格ライン付近！':'もう少し頑張ろう！';
+  document.getElementById('scoreSub').textContent  = st.label;
+  document.getElementById('rCor').textContent   = st.cor;
+  document.getElementById('rWrong').textContent = tot-st.cor;
+  document.getElementById('rTotal').textContent = tot;
+  document.getElementById('rTime').textContent  = `${mm}:${String(ss).padStart(2,'0')}`;
+  show('resultScreen', true);
+}
+function retryQuiz() { startQuiz(st.qs, st.label); }
+
+// ===== UTILS =====
+function shuffle(a) {
+  for (let i=a.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function show(id, back) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('backBtn').style.display = back?'block':'none';
+}
+function goHome() { show('homeScreen',false); renderHome(); }
+
+// ===== PWA Install =====
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner').style.display = 'flex';
+});
+document.getElementById('installYes').onclick = () => {
+  document.getElementById('installBanner').style.display = 'none';
+  if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt = null; }
+};
+document.getElementById('installNo').onclick = () => {
+  document.getElementById('installBanner').style.display = 'none';
+};
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installBanner').style.display = 'none';
+});
+
+// ===== Service Worker =====
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+}
+
+// ===== INIT =====
+document.getElementById('hdrDate').textContent = new Date().toLocaleDateString('ja-JP');
+renderHome();
+</script>
+</body>
+</html>
