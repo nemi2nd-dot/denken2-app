@@ -1,9 +1,15 @@
-const CACHE = 'denken2-v2';
+const CACHE = 'denken2-v3';
 const PRECACHE = [
   './index.html',
   './questions.js',
+  './q_theory.js',
+  './q_power.js',
+  './q_machine.js',
+  './q_law.js',
   './manifest.json',
   './icon.svg',
+  './privacy.html',
+  './about.html',
   'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css',
   'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js',
   'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js',

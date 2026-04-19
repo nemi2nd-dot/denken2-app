@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://goto-takao.github.io/denken2/sitemap.xml
